@@ -136,7 +136,7 @@
 
                 // Handler: mouseleave, focusout
                 $(openelement).on('mouseleave', function (event) {
-                    methods.hide(el);
+                    methods.hide(el, event);
                 });
 
             } else {
@@ -426,8 +426,9 @@
          * Hide method
          *
          * @param {object} el - popup instance DOM node
+         * @param {jQuery.Event} event - event which triggered the hide (passed to onclose handler)
          */
-        hide: function (el) {
+        hide: function (el, event) {
             if(opentimer) clearTimeout(opentimer);
 
             var $body = $('body');
@@ -488,7 +489,7 @@
             $el.attr('aria-hidden', true);
 
             // `onclose` callback event
-            callback(el, lastclicked[el.id], options.onclose);
+            callback(el, lastclicked[el.id], options.onclose, event);
 
             if (transitionsupport && $el.css('transition-duration') !== '0s') {
                 $el.one('transitionend', function(e) {
@@ -659,13 +660,16 @@
      * @param {object} el - popup instance DOM node
      * @param {number} ordinal - order number of an `open` element
      * @param {function} func - callback function
+     * @param {any} ...params - additional params sent to callback
      */
     var callback = function (el, ordinal, func) {
         var options = $(el).data('popupoptions');
         var openelement =  (options.openelement) ? options.openelement : ('.' + el.id + opensuffix);
         var elementclicked = $(openelement + '[data-popup-ordinal="' + ordinal + '"]');
         if (typeof func == 'function') {
-            func.call($(el), el, elementclicked);
+            var additionalArgs = [].slice.call(arguments, 3);
+            var args = [el, elementclicked].concat(additionalArgs);
+            func.apply($(el), args);
         }
     };
 
@@ -676,7 +680,7 @@
             var el = document.getElementById(elementId);
 
             if ($(el).data('popupoptions').escape && event.keyCode == 27) {
-                methods.hide(el);
+                methods.hide(el, event);
             }
         }
     });
@@ -691,12 +695,12 @@
             // Click on Close button
             if ($(event.target).closest(closeButton).length) {
                 event.preventDefault();
-                methods.hide(el);
+                methods.hide(el, event);
             }
 
             // Click outside of popup
             if ($(el).data('popupoptions').blur && !$(event.target).closest('#' + elementId).length && event.which !== 2 && $(event.target).is(':visible')) {
-                methods.hide(el);
+                methods.hide(el, event);
 
                 if ($(el).data('popupoptions').type === 'overlay') {
                     event.preventDefault(); // iOS will trigger click on the links below the overlay when clicked on the overlay if we don't prevent default action
