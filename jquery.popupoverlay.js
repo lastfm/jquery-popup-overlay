@@ -198,8 +198,8 @@
                 });
 
                 // Handler: mouseleave, focusout
-                $(openelement).on('mouseleave', function () {
-                    methods.hide(el);
+                $(openelement).on('mouseleave', function (event) {
+                    methods.hide(el, event);
                 });
 
             } else {
@@ -398,9 +398,10 @@
          * Hide method
          *
          * @param object el - popup instance DOM node
+         * @param {jQuery.Event} event - event which triggered the hide (passed to onclose handler)
          * @param boolean outerClick - click on the outer content below popup
          */
-        hide: function (el, outerClick) {
+        hide: function (el, event, outerClick) {
             // Get index of popup ID inside of visiblePopupsArray
             var popupIdIndex = $.inArray(el.id, visiblePopupsArray);
 
@@ -468,7 +469,7 @@
             $el.attr('aria-hidden', true);
 
             // `onclose` callback event
-            callback(el, lastclicked[el.id], options.onclose);
+            callback(el, lastclicked[el.id], options.onclose, event);
 
             if (transitionsupport && $el.css('transition-duration') !== '0s') {
                 $el.one('transitionend', function() {
@@ -665,6 +666,7 @@
      * @param {object} el - popup instance DOM node
      * @param {number} ordinal - order number of an `open` element
      * @param {function} func - callback function
+     * @param {any} ...params - additional params sent to callback
      */
     var callback = function (el, ordinal, func) {
         var options = $(el).data('popupoptions');
@@ -674,7 +676,9 @@
         openelement =  options.openelement ? options.openelement : ('.' + el.id + opensuffix);
         elementclicked = $(openelement + '[data-popup-ordinal="' + ordinal + '"]');
         if (typeof func == 'function') {
-            func.call($(el), el, elementclicked);
+            var additionalArgs = [].slice.call(arguments, 3);
+            var args = [el, elementclicked].concat(additionalArgs);
+            func.apply($(el), args);
         }
     };
 
@@ -700,7 +704,7 @@
             var el = document.getElementById(elementId);
 
             if ($(el).data('popupoptions').escape && event.keyCode == 27) {
-                methods.hide(el);
+                methods.hide(el, event);
             }
         }
     });
@@ -721,7 +725,7 @@
             // If Close button clicked
             if ($(event.target).closest(closeButton).length) {
                 event.preventDefault();
-                methods.hide(el);
+                methods.hide(el, event);
             }
 
             // If clicked outside of popup
@@ -735,7 +739,7 @@
 
                 if ($(el).data('popupoptions').background) {
                     // If clicked on popup cover
-                    methods.hide(el);
+                    methods.hide(el, event);
 
                     // Older iOS/Safari will trigger a click on the elements below the cover,
                     // when tapping on the cover, so the default action needs to be prevented.
@@ -743,7 +747,7 @@
 
                 } else {
                     // If clicked on outer content
-                    methods.hide(el, true);
+                    methods.hide(el, event, true);
                 }
             }
         }
