@@ -1,6 +1,7 @@
 /*!
  * jQuery Popup Overlay
  *
+ * @version 2.1.1-lastfm.2
  * @requires jQuery v1.7.1+
  * @link https://vast-engineering.github.com/jquery-popup-overlay/
  */
